@@ -15,8 +15,13 @@ const usersRouter = require('./routes/users');
 
 const app = express();
 
+// import pour CORS
 const cors = require('cors');
 app.use(cors());
+
+// import pour express-fileupload
+const fileUpload = require('express-fileupload');
+app.use(fileUpload());
 
 app.use(logger('dev'));
 app.use(express.json());
