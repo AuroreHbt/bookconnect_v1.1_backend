@@ -12,11 +12,9 @@ const bcrypt = require('bcrypt');
 const uid2 = require('uid2');
 
 
-// RECUP CORRECTION Hackatweet => A revoir mais base pour routes users
-//
 // route POST pour s'inscrire (new user)
 router.post('/signup', (req, res) => {
-  if (!checkBody(req.body, ['firstName', 'username', 'password'])) {
+  if (!checkBody(req.body, ['username', 'email', 'password'])) {
     res.json({ result: false, error: 'Missing or empty fields' });
     return;
   }
@@ -27,7 +25,7 @@ router.post('/signup', (req, res) => {
       const hash = bcrypt.hashSync(req.body.password, 10);
 
       const newUser = new User({
-        firstName: req.body.firstName,
+        email: req.body.email,
         username: req.body.username,
         password: hash,
         token: uid2(32),
@@ -44,17 +42,19 @@ router.post('/signup', (req, res) => {
 });
 
 // route POST pour se connecter (user déjà inscrit)
+
+//l'utilisateur n'a pas (ou mal) rempli tous les champs
 router.post('/signin', (req, res) => {
-  if (!checkBody(req.body, ['username', 'password'])) {
+  if (!checkBody(req.body, ['email', 'password'])) {
     res.json({ result: false, error: 'Missing or empty fields' });
     return;
   }
 
   User.findOne({ username: { $regex: new RegExp(req.body.username, 'i') } }).then(data => {
     if (data && bcrypt.compareSync(req.body.password, data.password)) {
-      res.json({ result: true, token: data.token, username: data.username, firstName: data.firstName });
+      res.json({ result: true, token: data.token, email: data.email }); // L'utilisateur est trouvé, la connexion s'effectue
     } else {
-      res.json({ result: false, error: 'User not found or wrong password' });
+      res.json({ result: false, error: 'User not found or wrong password' }); // L'utilisateur n'est pas trouvé, soit il n'a pas de compte soit il a un compte mais il s'est trompé de mdp 
     }
   });
 });
