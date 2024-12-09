@@ -25,14 +25,15 @@ router.post('/signup', (req, res) => {
       const hash = bcrypt.hashSync(req.body.password, 10);
 
       const newUser = new User({
-        email: req.body.email,
         username: req.body.username,
+        email: req.body.email,
         password: hash,
         token: uid2(32),
       });
 
       newUser.save().then(newDoc => {
-        res.json({ result: true, token: newDoc.token });
+        console.log(newDoc);        
+        res.json({ result: true, username: newDoc.username, token: newDoc.token });
       });
     } else {
       // User already exists in database
