@@ -1,11 +1,15 @@
 const mongoose = require('mongoose');
 
 const eventSchema = mongoose.Schema({
-    name: String,
-    place: String,
+    planner: { type: mongoose.Schema.Types.ObjectId, ref: 'users' },   // foreign keys pour relier les stories créées par le même utilisateur.
+    title: String,
+    category: String,
     date: Date,
-    description: String,    // penser à utiliser subtring pour limiter le nb de caractères affichés sur l'appli
-    user: { type: mongoose.Schema.Types.ObjectId, ref: 'users' },   // foreign keys pour relier les events de l'utilisateur entre eux => 2 collections en BDD;
+    place: String,
+    description: String, // penser à utiliser substring pour limiter le nb de caracteres
+    eventImage: String, // url de l'image
+    url: String, //url de l'event (site externe par exemple)
+    isLiked: Boolean, // par défaut = false    
 })
 
 const Event = mongoose.model('events', eventSchema);
