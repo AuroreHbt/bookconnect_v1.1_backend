@@ -14,6 +14,8 @@ const uid2 = require('uid2');
 
 // route POST pour s'inscrire (new user)
 router.post('/signup', (req, res) => {
+  console.log('test');
+  
   if (!checkBody(req.body, ['username', 'email', 'password'])) {
     res.json({ result: false, error: 'Missing or empty fields' });
     return;
@@ -50,7 +52,7 @@ router.post('/signin', (req, res) => {
     return;
   }
 
-  User.findOne({ username: { $regex: new RegExp(req.body.username, 'i') } }).then(data => {
+  User.findOne({ email: { $regex: new RegExp(req.body.email, 'i') } }).then(data => {
     if (data && bcrypt.compareSync(req.body.password, data.password)) {
       res.json({ result: true, token: data.token, email: data.email }); // L'utilisateur est trouvé, la connexion s'effectue
     } else {
