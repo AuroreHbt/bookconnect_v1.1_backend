@@ -55,7 +55,7 @@ router.post('/signin', (req, res) => {
 
   User.findOne({ email: { $regex: new RegExp(req.body.email, 'i') } }).then(data => {
     if (data && bcrypt.compareSync(req.body.password, data.password)) {
-      res.json({ result: true, token: data.token, email: data.email }); // L'utilisateur est trouvé, la connexion s'effectue
+      res.json({ result: true, token: data.token, email: data.email, username : data.username }); // L'utilisateur est trouvé, la connexion s'effectue
     } else {
       res.json({ result: false, error: 'User not found or wrong password' }); // L'utilisateur n'est pas trouvé, soit il n'a pas de compte soit il a un compte mais il s'est trompé de mdp 
     }
