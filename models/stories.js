@@ -5,6 +5,7 @@ const storySchema = mongoose.Schema({
     title: String,
     category: String,
     isAdult : Boolean, // par défaut = false
+    textContent : String, // url du fichier
     coverImage: String, // url de l'image
     description: String, // penser à utiliser substring pour limiter le nb de caracteres
     isLiked: Boolean, // par défaut = false    
