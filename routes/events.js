@@ -73,12 +73,42 @@ router.post('/addevent', async (req, res) => {
         // Sauvegarde dans MongoDB
         const savedEvent = await newEvent.save();
 
-        res.json({ result: true, message: 'Événement créé avec succès', event: savedEvent });
+        // Récupérer et populate les informations du planner
+        const populatedEvent = await Event.findById(savedEvent._id).populate('planner');
+
+
+        res.json({ result: true, message: 'Événement créé avec succès', event: populatedEvent });
         } catch (error) {
         console.error(error);
         res.json({ result: false, error: 'Erreur lors de la création de l\'événement.' });
         };
 
+});
+
+
+// route GET pour rechercher un évènement existant dans la BDD, par adresse (place)
+router.get('/searchevent/:place', async (req, res) => {
+    const { place }= req.params;
+
+    try {
+        // Est-ce que le paramètre place est renseigné ?
+        if (!place) {
+           return res.json({ result: false, error: 'Adresse requise'})
+        }
+
+        // Chercher des évènements correspondant avec la localisation, insensible à la casse avec la regex
+        const events = await Event.find({ place: { $regex: new RegExp(place, 'i') } });
+
+        // Check des évènements trouvés ou non
+        if (events.length === 0) {
+            return res.json({ result: false, error: 'Aucun évènement à cette adresse'})
+        };
+
+        // Si évenement trouvé, retourne le résultat ci-dessous
+        res.json({ result: true, data: events});
+    } catch {
+        console.log('erreur lors de la récupération des évènements');
+    }
 })
 
 
