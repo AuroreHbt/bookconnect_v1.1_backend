@@ -71,11 +71,11 @@ router.post('/addstory', async (req, res) => {
             const resultMoveCover = await req.files.coverImage.mv(coverPath);
             const resultMoveContent = await req.files.storyFile.mv(contentPath);
 
-            // Charger le fichier sur Cloudinary
+            // Charger le fichier sur Cloudinary 
             const resultCloudinaryCover = await cloudinary.uploader.upload(coverPath);
             const resultCloudinaryContent = await cloudinary.uploader.upload(contentPath);
 
-            // Après l'upload sur le cloud, supprimer les fichiers temporaires en local
+            // Puis supprimer les fichiers temporaires en local
             fs.unlinkSync(coverPath);
             fs.unlinkSync(contentPath);
 
