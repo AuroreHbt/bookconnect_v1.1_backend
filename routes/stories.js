@@ -28,21 +28,21 @@ router.post('/addstory', async (req, res) => {
         }
 
         // Valeur par défaut si aucune image n'est envoyée par l'auteur
-        let coverFile = null;
+        let coverImage = null;
 
         // Valeur par défaut si aucun texte n'est envoyé par l'auteur
-        let contentFile = null;
+        let storyFile = null;
 
         // Vérifier uniquement si un fichier est présent
-        // => Si aucun fichier n'est fourni, l'histoire est créée avec coverFile = null
-        // coverFile et contentFile = noms des propriétés à réutiliser côté frontend
-        if (req.files.coverFile || req.files.contentFile) {
-            console.log(req.files.coverFile);
-            console.log(req.files.contentFile);
+        // => Si aucun fichier n'est fourni, l'histoire est créée avec coverImage = null
+        // coverImage et storyFile = noms des propriétés à réutiliser côté frontend
+        if (req.files.coverImage || req.files.storyFile) {
+            console.log(req.files.coverImage);
+            console.log(req.files.storyFile);
 
             // Récupérer le mimetype du fichier et extraire l'extension
-            const imgFile = req.files.coverFile;
-            const txtFile = req.files.contentFile;
+            const imgFile = req.files.coverImage;
+            const txtFile = req.files.storyFile;
             const imgFileExtension = mime.extension(imgFile.mimetype);
             const txtFileExtension = mime.extension(txtFile.mimetype);
             console.log(imgFileExtension);
@@ -68,8 +68,8 @@ router.post('/addstory', async (req, res) => {
             console.log(contentPath);
 
             // Déplacer le fichier temporairement sur le backend (dossier tmp)
-            const resultMoveCover = await req.files.coverFile.mv(coverPath);
-            const resultMoveContent = await req.files.contentFile.mv(contentPath);
+            const resultMoveCover = await req.files.coverImage.mv(coverPath);
+            const resultMoveContent = await req.files.storyFile.mv(contentPath);
 
             // Charger le fichier sur Cloudinary
             const resultCloudinaryCover = await cloudinary.uploader.upload(coverPath);
@@ -80,10 +80,10 @@ router.post('/addstory', async (req, res) => {
             fs.unlinkSync(contentPath);
 
             // Mise à jour des URL des fichiers image et texte
-            coverFile = resultCloudinaryCover.secure_url;
-            contentFile = resultCloudinaryContent.secure_url;
-            console.log(coverFile);
-            console.log(contentFile);
+            coverImage = resultCloudinaryCover.secure_url;
+            storyFile = resultCloudinaryContent.secure_url;
+            console.log(coverImage);
+            console.log(storyFile);
         };
 
         // Création de l'évènement avec ou sans image
@@ -93,8 +93,8 @@ router.post('/addstory', async (req, res) => {
             isAdult: isAdult || false,
             category,
             description,
-            coverFile,
-            contentFile,
+            coverImage,
+            storyFile,
         });
 
         // Sauvegarde dans MongoDB
