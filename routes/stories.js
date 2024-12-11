@@ -1,10 +1,3 @@
-<<<<<<< HEAD
-const express = require("express");
-const router = express.Router();
-const cloudinary = require("cloudinary").v2;
-const Story = require("../models/story");
-const User = require("../models/user");
-=======
 const express = require('express');
 const router = express.Router();
 
@@ -116,4 +109,3 @@ router.post('/addstory', async (req, res) => {
 
 
 module.exports = router;
->>>>>>> f4a297b7551ef128fe43d473b903a7b68431afdf
