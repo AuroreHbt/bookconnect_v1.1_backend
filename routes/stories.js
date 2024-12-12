@@ -129,36 +129,7 @@ router.post('/addstory', async (req, res) => {
             console.log("Aucun fichier reçu.");
         }
 
-<<<<<<< HEAD
-            // attribution d'un id unique pour save dans cloudinary
-            const coverPath = `./tmp/${uniqid()}.${imgFileExtension}`;
-            const contentPath = `./tmp/${uniqid()}.${txtFileExtension}`;
-            console.log(coverPath);
-            console.log(contentPath);
-
-            // Déplacer le fichier temporairement sur le backend (dossier tmp)
-            const resultMoveCover = await req.files.coverImage.mv(coverPath);
-            const resultMoveContent = await req.files.storyFile.mv(contentPath);
-
-            // Charger le fichier sur Cloudinary 
-            const resultCloudinaryCover = await cloudinary.uploader.upload(coverPath);
-            const resultCloudinaryContent = await cloudinary.uploader.upload(contentPath);
-
-            // Puis supprimer les fichiers temporaires en local
-            fs.unlinkSync(coverPath);
-            fs.unlinkSync(contentPath);
-
-            // Mise à jour des URL des fichiers image et texte
-            coverImage = resultCloudinaryCover.secure_url;
-            storyFile = resultCloudinaryContent.secure_url;
-            console.log(coverImage);
-            console.log(storyFile);
-        };
-
-        // Création de l'évènement avec ou sans image
-=======
         // Création d'un nouvel objet histoire
->>>>>>> 751c4082584b97023c7fcff2388f92bc083677d0
         const newStory = new Story({
             author: user._id, // Utilisation de l'ID MongoDB de l'utilisateur
             title,
