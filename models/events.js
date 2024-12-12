@@ -9,7 +9,14 @@ const eventSchema = mongoose.Schema({
     description: String, // penser à utiliser substring pour limiter le nb de caracteres
     eventImage: String, // url de l'image
     url: String, //url de l'event (site externe par exemple)
-    isLiked: Boolean, // par défaut = false    
+    isLiked: Boolean, // par défaut = false
+    location: { // Coordonnées GPS au format GeoJSON
+        type: { type: String, default: 'Point' },
+        coordinates: [Number], // [longitude, latitude]
+    }, 
+    /* Objet location directement stocké avec l'événement. 
+    Il ne bénéficie pas des fonctionnalités avancées des sous-documents, mais il est simple et parfaitement adapté à des champs 
+    qui ne nécessitent pas de gestion indépendante. Pas réutilisable donc pas besoin d'un sous-document */
 })
 
 const Event = mongoose.model('events', eventSchema);
