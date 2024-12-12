@@ -8,7 +8,7 @@ const storySchema = mongoose.Schema({
     description: String, // penser à utiliser substring pour limiter le nb de caracteres
     coverImage: String, // url de l'image
     storyFile: String, // url du fichier
-    isLiked: Boolean, // par défaut = false    
+    isLiked: [{ type: mongoose.Schema.Types.ObjectId, ref: 'users' }], // par défaut = false    
 });
 
 const Story = mongoose.model('stories', storySchema);
