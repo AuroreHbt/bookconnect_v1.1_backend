@@ -5,7 +5,7 @@ const storySchema = mongoose.Schema({
     title: String, // Autre écriture rencontrée à confirmer : {type:String, require: true},
     isAdult : Boolean, // par défaut = false
     category: String,
-    description: String, // penser à utiliser substring pour limiter le nb de caracteres
+    description: String,
     coverImage: String, // url de l'image
     storyFile: String, // url du fichier
     isLiked: [{ type: mongoose.Schema.Types.ObjectId, ref: 'users' }], // par défaut = false    
