@@ -15,97 +15,99 @@ const mime = require('mime-types');
 const Story = require('../models/stories');
 
 
-// route POST pour ajouter un book avec upload Cloudinary
+
 router.post('/addstory', async (req, res) => {
     try {
+        
+        console.log("req.body :", req.body); // Contient les champs textuels (title, description, etc.)
+        console.log("req.files :", req.files); // Contient les fichiers envoyés (coverImage, storyFile)
+
+        // Déstructuration des champs textuels envoyés dans le body
         const { author, title, isAdult, category, description } = req.body;
-        // correspondent aux champs à compléter
-        // coverImage et textContent sont des upload et pas des champs à compléter
-        console.log(req.body);
-        // Validation avec au moins ces champs obligatoires
-        if (!title || !category || !isAdult || !description) {
+
+        // Validation des champs obligatoires (title, isAdult, description)
+        if (!title || !isAdult || !description) {
             return res.json({ result: false, error: 'Les champs obligatoires ne sont pas remplis' });
         }
 
-        // Valeur par défaut si aucune image n'est envoyée par l'auteur
-        let coverImage = null;
+        let coverImage = null; // URL de l'image de couverture (si fournie)
+        let storyFile = null; // URL du fichier texte (obligatoire)
 
-        // Valeur par défaut si aucun texte n'est envoyé par l'auteur
-        let storyFile = null;
+        // Vérification si des fichiers sont envoyés
+        if (req.files) {
+            // Traitement de l'image de couverture si elle est envoyée
+            if (req.files.coverImage) {
+                const imgFile = req.files.coverImage; // Récupération de l'image
+                const imgFileExtension = mime.extension(imgFile.mimetype); // Extraction de l'extension
+                const imgValidExtensions = ['jpg', 'jpeg', 'png', 'gif']; // Extensions d'image valides
 
-        // Vérifier uniquement si un fichier est présent
-        // => Si aucun fichier n'est fourni, l'histoire est créée avec coverImage = null
-        // coverImage et storyFile = noms des propriétés à réutiliser côté frontend
-        if (req.files.coverImage || req.files.storyFile) {
-            console.log(req.files.coverImage);
-            console.log(req.files.storyFile);
+                // Vérification du type de fichier image
+                if (!imgValidExtensions.includes(imgFileExtension)) {
+                    return res.json({ result: false, error: 'Type de fichier image non pris en charge' });
+                }
 
-            // Récupérer le mimetype du fichier et extraire l'extension
-            const imgFile = req.files.coverImage;
-            const txtFile = req.files.storyFile;
-            const imgFileExtension = mime.extension(imgFile.mimetype);
-            const txtFileExtension = mime.extension(txtFile.mimetype);
-            console.log(imgFileExtension);
-            console.log(txtFileExtension);
+                // Chemin temporaire pour stocker le fichier localement
+                const coverPath = `./tmp/${uniqid()}.${imgFileExtension}`;
+                await imgFile.mv(coverPath); // Déplacement du fichier en local
 
-            // Vérifier que le fichier est une image valide acceptée par Cloudinary
-            // les extensions dynamiques sont supportées
-            const imgValidExtensions = ['jpg', 'jpeg', 'png', 'gif'];
-            if (!imgValidExtensions.includes(imgFileExtension)) {
-                return res.json({ result: false, error: 'Type de fichier image non pris en charge' });
+                // Upload de l'image sur Cloudinary
+                const resultCloudinaryCover = await cloudinary.uploader.upload(coverPath);
+
+                // Suppression du fichier temporaire
+                fs.unlinkSync(coverPath);
+
+                // URL sécurisée de l'image sur Cloudinary
+                coverImage = resultCloudinaryCover.secure_url;
             }
 
-            // Vérifier que le fichier est un texte valide accepté par Cloudinary
-            const txtValidExtensions = ['pdf', 'docx'];
-            if (!txtValidExtensions.includes(txtFileExtension)) {
-                return res.json({ result: false, error: 'Type de fichier texte non pris en charge' });
+            // Traitement du fichier texte si envoyé
+            if (req.files.storyFile) {
+                const txtFile = req.files.storyFile; // Récupération du fichier texte
+                const txtFileExtension = mime.extension(txtFile.mimetype);
+                const txtValidExtensions = ['pdf', 'docx']; 
+
+                // Vérification du type de fichier texte
+                if (!txtValidExtensions.includes(txtFileExtension)) {
+                    return res.json({ result: false, error: 'Type de fichier texte non pris en charge' });
+                }
+
+                const contentPath = `./tmp/${uniqid()}.${txtFileExtension}`;
+                await txtFile.mv(contentPath); 
+
+                // Upload du fichier texte sur Cloudinary
+                const resultCloudinaryContent = await cloudinary.uploader.upload(contentPath);
+
+                // Suppression du fichier temporaire
+                fs.unlinkSync(contentPath);
+
+                
+                storyFile = resultCloudinaryContent.secure_url;
             }
+        }
 
-            // attribution d'un id unique pour save dans cloudinary
-            const coverPath = `./tmp/${uniqid()}.${imgFileExtension}`;
-            const contentPath = `./tmp/${uniqid()}.${txtFileExtension}`;
-            console.log(coverPath);
-            console.log(contentPath);
-
-            // Déplacer le fichier temporairement sur le backend (dossier tmp)
-            const resultMoveCover = await req.files.coverImage.mv(coverPath);
-            const resultMoveContent = await req.files.storyFile.mv(contentPath);
-
-            // Charger le fichier sur Cloudinary
-            const resultCloudinaryCover = await cloudinary.uploader.upload(coverPath);
-            const resultCloudinaryContent = await cloudinary.uploader.upload(contentPath);
-
-            // Après l'upload sur le cloud, supprimer les fichiers temporaires en local
-            fs.unlinkSync(coverPath);
-            fs.unlinkSync(contentPath);
-
-            // Mise à jour des URL des fichiers image et texte
-            coverImage = resultCloudinaryCover.secure_url;
-            storyFile = resultCloudinaryContent.secure_url;
-            console.log(coverImage);
-            console.log(storyFile);
-        };
-
-        // Création de l'évènement avec ou sans image
+        // Création d'une nouvelle histoire dans la base de données
         const newStory = new Story({
-            author,
-            title,
-            isAdult: isAdult || false,
-            category,
-            description,
-            coverImage,
+            author, 
+            title, 
+            isAdult, 
+            category, 
+            description, 
+            coverImage, 
             storyFile,
         });
 
-        // Sauvegarde dans MongoDB
+        // Sauvegarde de l'histoire dans MongoDB
         const savedStory = await newStory.save();
 
+        // Réponse envoyée au front-end
         res.json({ result: true, message: 'Histoire publiée avec succès', story: savedStory });
     } catch (error) {
         console.error(error);
         res.json({ result: false, error: 'Erreur lors de la publication de l\'histoire.' });
-    };
+    }
 });
 
-
 module.exports = router;
+
+
+
