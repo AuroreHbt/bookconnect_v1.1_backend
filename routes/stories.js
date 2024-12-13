@@ -13,13 +13,16 @@ const mime = require('mime-types');
 
 // import du Model
 const Story = require('../models/stories');
-const User = require('../models/users')
+const User = require('../models/users');
+
+// import du module checkBody
+const { checkBody } = require('../modules/checkBody');
+
 
 // Routes pour poster une nouvelle histoire 
-
 router.post('/addstory', async (req, res) => {
     try {
-        
+
         console.log("Requête reçue - req.body :", req.body); // Champs textuels
         console.log("Requête reçue - req.files :", req.files); // Fichiers envoyés
 
@@ -56,7 +59,7 @@ router.post('/addstory', async (req, res) => {
 
         console.log("Utilisateur trouvé :", user);
 
-        
+
         let coverImage = null; // URL de l'image de couverture (si fournie)
         let storyFile = null; // URL du fichier texte (si fourni)
 
@@ -91,7 +94,7 @@ router.post('/addstory', async (req, res) => {
                 fs.unlinkSync(coverPath);
                 console.log("Fichier temporaire supprimé :", coverPath);
 
-               
+
                 coverImage = resultCloudinaryCover.secure_url;
             }
 
@@ -151,32 +154,79 @@ router.post('/addstory', async (req, res) => {
     }
 });
 
-// Route pour chercher les nouvelles histoires postées en fonction de l'auteur
 
+// Route pour chercher les nouvelles histoires postées par un auteur
 router.get('/mypublishedstory/:author', (req, res) => {
     console.log('Requête reçue pour auteur :', req.params.author);
-    
+
     // Recherche de l'utilisateur dans la base de données
     User.findOne({ username: req.params.author })
-    .then(user => {
-      // Si aucun utilisateur trouvé, renvoie une erreur
-      if (!user) {
-        return res.json({ result: false, error: 'Auteur non trouvé' }); 
-      }
-      // Si l'utilisateur est trouvé, rechercher toutes les histoires associées à son ID
-      Story.find({author : user._id})
-        .populate('author', ['username', 'email']) // Remplit les détails de l'auteur (nom d'utilisateur et email) pour chaque histoire
-        .populate('category')
-        .sort({ createdAt: 'desc' }) // Trie les histoires par ordre décroissant de date de création
-        .then(stories => {
-            console.log('histoires trouvées :');
-            res.json({ result: true, stories }); // Renvoyer les histoires trouvées
+        .then(user => {
+            // Si aucun utilisateur trouvé, renvoie une erreur
+            if (!user) {
+                return res.json({ result: false, error: 'Auteur non trouvé' });
+            }
+            // Si l'utilisateur est trouvé, rechercher toutes les histoires associées à son ID
+            Story.find({ author: user._id })
+                .populate('author', ['username', 'email']) // Remplit les détails de l'auteur (nom d'utilisateur et email) pour chaque histoire
+                .populate('category')
+                .sort({ createdAt: 'desc' }) // Trie les histoires par ordre décroissant de date de création
+                .then(stories => {
+                    console.log('histoires trouvées :');
+                    res.json({ result: true, stories }); // Renvoyer les histoires trouvées
+                });
         });
-    });
 });
 
 
+// Route pour supprimer une histoire spécifique d'un auteur
+router.delete('/deletepublishedstory', async (req, res) => {
+    // console.log("Requête complète :", req);
+    try {
+        console.log('connexion route ok')
+        console.log("Requête reçue - req.body.token :", req.body.token);
+        console.log("Requête reçue - req.body.storyId :", req.body.storyId);
+
+        if (!checkBody(req.body, ["token", "storyId"])) {
+            console.log(req.body.token)
+            console.log(req.body.storyId)
+            res.json({ result: false, error: "Missing or empty fields" });
+            return; // early return : stop le code si la condition n'est pas remmplie
+        }
+
+        // recherche du user qui correspond à l'author
+        User.findOne({ token: req.body.token }).then((user) => {
+            console.log(user)
+            if (user === null) {
+                res.json({ result: false, error: "User not found" });
+                return;
+            }
+
+            // recherche de l'histoire qui correspond à l'author
+            Story.findById(req.body.storyId)
+                .populate("author")
+                .then((story) => {
+                    if (!story) {
+                        res.json({ result: false, error: "story not found" });
+                        return;
+                    } else if (String(story.author._id) !== String(user._id)) {
+                        // ObjectId doit être converti en format string (JS ne peut pa comparer 2 objets)
+                        res.json({
+                            result: false,
+                            error: "Story can only be deleted by its author",
+                        });
+                        return;
+                    }
+
+                    story.deleteOne({ _id: story._id }).then(() => {
+                        res.json({ result: true });
+                        console.log("story deleted");
+                    });
+                });
+        });
+    } catch (error) {
+        console.error("Erreur lors de la suppression de l'histoire :", error);
+    }
+});
+
 module.exports = router;
-
-
-
