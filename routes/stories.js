@@ -211,6 +211,7 @@ router.delete('/deletepublishedstory', async (req, res) => {
                         return;
                     } else if (String(story.author._id) !== String(user._id)) {
                         // ObjectId doit être converti en format string (JS ne peut pa comparer 2 objets)
+                        // vérifie si l'histoire existe et si l'utilisateur est l'author de la story
                         res.json({
                             result: false,
                             error: "Story can only be deleted by its author",
