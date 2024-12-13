@@ -28,5 +28,9 @@ const eventSchema = mongoose.Schema({
     qui ne nécessitent pas de gestion indépendante. Pas réutilisable donc pas besoin d'un sous-document */
 })
 
+
+
+
+
 const Event = mongoose.model('events', eventSchema);
 module.exports = Event;
