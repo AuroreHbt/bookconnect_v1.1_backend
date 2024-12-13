@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 
-const axios = require('axios'); // Pour appeler OpenCage
+const axios = require('axios'); // Pour appeler OpenCage. Gestion automatique des JSON. Compatible avec Node.js
 
 // Créer un fichier avec un nom aléatoire via le module uniqid
 const uniqid = require('uniqid');
@@ -15,6 +15,7 @@ const mime = require('mime-types');
 
 // import du Model
 const Event = require('../models/events');
+const User = require('../models/users')
 
 const API_KEY_MAP = process.env.EXPO_PUBLIC_MAP_API_KEY
 
@@ -23,10 +24,22 @@ router.post('/addevent', async (req, res) => {
     try {
         const { planner, title, category, date, place, description, url, isLiked } = req.body;
 
+        // Vérification que l'auteur est fourni
+        if (!planner) {
+            console.log("planner non fourni dans la requête.");
+            return res.json({ result: false, error: "planner non spécifié." });
+        };
+
+        const user = await User.findOne({ username: planner });
+        if (!user) {
+            console.log("Organisateur introuvable dans la base de données :", author);
+            return res.json({ result: false, error: 'Organisateur non trouvé.' });
+        };
+
         // Validation avec au moins ces champs obligatoires
         if (!title || !date || !place || !description || !category) {
             return res.json({ result: false, error: 'Les champs obligatoires ne sont pas remplis'});
-        }
+        };
 
         // Appeler l'API OpenCage pour récupérer les coordonnées GPS
         // fonction encode l'adresse (place) pour garantir que les caractères spéciaux (comme les espaces ou les accents) soient correctement inclus dans l'URL sans provoquer d'erreur.
@@ -77,11 +90,20 @@ router.post('/addevent', async (req, res) => {
 
         // Création de l'évènement avec ou sans image
         const newEvent = new Event({
-            planner,
+            planner: user._id, // Utilisation de l'ID MongoDB de l'utilisateur
             title,
             category,
-            date,
-            place,
+            date: {
+                day,
+                start,
+                end,
+            },
+            place: {
+                number,
+                street,
+                code,
+                city,
+            },
             description,
             eventImage,
             url,
