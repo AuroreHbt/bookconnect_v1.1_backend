@@ -91,6 +91,7 @@ router.post('/addevent', async (req, res) => {
                 coordinates: [lng, lat],
             },
         });
+        
 
         // Sauvegarde dans MongoDB
         const savedEvent = await newEvent.save();
