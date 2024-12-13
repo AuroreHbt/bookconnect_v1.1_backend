@@ -10,9 +10,9 @@ it('GET /stories/mypublishedstory/:author', async () => {
 
 it('POST /users/signup', async () => {
     const res = await request(app).post('/users/signup').send({
-        username: 'test1t234', // re-générer un username pour newTest
-        email: 'test1t234@gmail.com', // re-générer un email pour newTest
-        password: 'azer4tty123&!', // re-générer un password pour newTest
+        username: 'test123', // re-générer un username pour newTest
+        email: 'test123@gmail.com', // re-générer un email pour newTest
+        password: 'azerty123&!', // re-générer un password pour newTest
     });
 
     expect(res.statusCode).toBe(200);
