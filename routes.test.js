@@ -7,7 +7,8 @@ const app = require('./app');
 
 // générer un username random
 function generateRandomUsername() {
-  return Math.random().toString(36).substring(2, 10)
+  const userTest = Math.random().toString(36).substring(2, 10)
+  return `UserTest${userTest}`;
 }
 
 // générer un email random
