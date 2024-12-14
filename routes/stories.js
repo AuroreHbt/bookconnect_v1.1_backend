@@ -172,7 +172,7 @@ router.get('/mypublishedstory/:author', (req, res) => {
                 .populate('category')
                 .sort({ createdAt: 'desc' }) // Trie les histoires par ordre décroissant de date de création
                 .then(stories => {
-                    console.log('histoires trouvées :');
+                    console.log('histoires trouvées :', stories); // stories = [{...}]
                     res.json({ result: true, stories }); // Renvoyer les histoires trouvées
                 });
         });
@@ -181,7 +181,7 @@ router.get('/mypublishedstory/:author', (req, res) => {
 
 // Route pour supprimer une histoire spécifique d'un auteur
 router.delete('/deletepublishedstory', async (req, res) => {
-    // console.log("Requête complète :", req);
+    console.log("Requête :", req.body);
     try {
         console.log('connexion route ok')
         console.log("Requête reçue - req.body.token :", req.body.token);
