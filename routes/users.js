@@ -14,8 +14,8 @@ const uid2 = require('uid2');
 
 // route POST pour s'inscrire (new user)
 router.post('/signup', (req, res) => {
-  console.log('test');
-  
+  console.log(req.body);
+
   if (!checkBody(req.body, ['username', 'email', 'password'])) {
     res.json({ result: false, error: 'Missing or empty fields' });
     return;
@@ -34,7 +34,7 @@ router.post('/signup', (req, res) => {
       });
 
       newUser.save().then(newDoc => {
-        console.log(newDoc);        
+        console.log(newDoc);
         res.json({ result: true, username: newDoc.username, token: newDoc.token });
       });
     } else {
@@ -45,17 +45,17 @@ router.post('/signup', (req, res) => {
 });
 
 // route POST pour se connecter (user déjà inscrit)
-
-//l'utilisateur n'a pas (ou mal) rempli tous les champs
 router.post('/signin', (req, res) => {
+  console.log(req.body);
+
   if (!checkBody(req.body, ['email', 'password'])) {
     res.json({ result: false, error: 'Missing or empty fields' });
-    return;
+    return;  //l'utilisateur n'a pas (ou mal) rempli tous les champs (early return)
   }
 
   User.findOne({ email: { $regex: new RegExp(req.body.email, 'i') } }).then(data => {
     if (data && bcrypt.compareSync(req.body.password, data.password)) {
-      res.json({ result: true, token: data.token, email: data.email, username : data.username }); // L'utilisateur est trouvé, la connexion s'effectue
+      res.json({ result: true, username: data.username, email: data.email, token: data.token }); // L'utilisateur est trouvé, la connexion s'effectue
     } else {
       res.json({ result: false, error: 'User not found or wrong password' }); // L'utilisateur n'est pas trouvé, soit il n'a pas de compte soit il a un compte mais il s'est trompé de mdp 
     }
