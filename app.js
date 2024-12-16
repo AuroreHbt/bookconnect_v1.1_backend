@@ -23,6 +23,7 @@ const app = express();
 
 // Middleware pour parser le JSON
 app.use(bodyParser.json());
+app.use(express.json());
 
 // Middleware pour parser les données URL-encodées
 app.use(bodyParser.urlencoded({ extended: true }));
