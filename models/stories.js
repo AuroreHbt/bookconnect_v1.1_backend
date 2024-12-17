@@ -8,8 +8,13 @@ const storySchema = mongoose.Schema({
     description: String,
     coverImage: String, // url de l'image
     storyFile: String, // url du fichier
-    isLiked: [{ type: mongoose.Schema.Types.ObjectId, ref: 'users' }], // par défaut = false    
-});
+    isLiked: Boolean, // par défaut = false
+    
+}, { timestamps: { 
+    createdAt: 'createdAt', // Nom personnalisé pour createdAt
+    updatedAt: 'updatedAt'  // Nom personnalisé pour updatedAt
+}
+} );
 
 const Story = mongoose.model('stories', storySchema);
 
