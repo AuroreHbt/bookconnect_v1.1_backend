@@ -203,13 +203,12 @@ router.get("/mypublishedstory/:author", (req, res) => {
 
 // Route pour supprimer une histoire spécifique d'un auteur
 router.delete("/deletepublishedstory", async (req, res) => {
+    // Debug => ok
+    // console.log('connexion route ok')
+    // console.log("Requête :", req.body)
+    // console.log("Requête reçue - req.body.token :", req.body.token);
+    // console.log("Requête reçue - req.body.storyId :", req.body.id);
     try {
-        // Debug => ok
-        // console.log('connexion route ok')
-        // console.log("Requête :", req.body)
-        // console.log("Requête reçue - req.body.token :", req.body.token);
-        // console.log("Requête reçue - req.body.storyId :", req.body.id);
-
         if (!checkBody(req.body, ["token", "id"])) {
             res.json({ result: false, error: "User ou story non trouvés" });
             return; // early return : stop le code si la condition n'est pas remmplie
@@ -250,12 +249,28 @@ router.delete("/deletepublishedstory", async (req, res) => {
 
 // Route pour modifier une histoire spécifique d'un auteur
 router.put('/updatepublishedstory', async (req, res) => {
+    const { title, category, isAdult, description, coverImage, storyFile } = req.body;
+    // Debug
+    console.log('connexion route ok')
+    console.log("Requête :", req.body);
+    console.log("Requête reçue - req.body.title :", req.body.title);
+    console.log("Requête reçue - req.body.category :", req.body.category);
+    console.log("Requête reçue - req.body.isAdult :", req.body.isAdult);
+    console.log("Requête reçue - req.body.description :", req.body.description);
+    console.log("Requête reçue - req.body.coverImage :", req.body.coverImage);
+    console.log("Requête reçue - req.body.storyFile :", req.body.storyFile);
+
+    // stories = [] => cf. initial value du reducer stories
+    stories[title] = req.body.newTitle; // Update titre
+    res.json({ stories: title });
+
+    stories[category] = req.body.newCategory; // Update category
+    res.json({ stories: category });
+
+    stories[description] = req.body.newDescription; // Update titre
+    res.json({ stories: description });
+
     try {
-        // Debug => ok
-        console.log('connexion route ok')
-        console.log("Requête :", req.body)
-        console.log("Requête reçue - req.body.token :", req.body.token);
-        console.log("Requête reçue - req.body.storyId :", req.body.id);
 
         if (!checkBody(req.body, ["token", "id"])) {
             res.json({ result: false, error: "User ou story non trouvés" });
@@ -285,15 +300,16 @@ router.put('/updatepublishedstory', async (req, res) => {
                         return;
                     }
 
-                    story.deleteOne({ _id: story._id }).then(() => {
-                        res.json({ result: true, message: "story deleted" });
+                    story.updateOne({ _id: story._id }).then(() => {
+                        res.json({ result: true, message: "story updated" });
                     });
                 });
         });
     } catch (error) {
-        console.error("Erreur lors de la suppression de l'histoire :", error);
+        console.error("Erreur lors de la modification de l'histoire :", error);
     }
 });
+
 
 // Route get pour rechercher une histoire soit par titre, auteur, catégorie ou bien avec ces trois champs
 
