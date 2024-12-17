@@ -385,4 +385,19 @@ router.get("/allstories", (req, res) => {
         })
 })
 
+router.get("/laststories", (req, res) => {
+    Story.find()
+        .populate("author", ["username", "email"])
+        .sort({ createdAt: "desc" })
+        .then((stories) => {
+            if (!stories || stories.length === 0) {
+                return res.json({
+                    result: false,
+                    error: "Aucune histoire trouvée pour les critères donnés.",
+                });
+            }
+            res.json({ result: true, stories })
+        })
+})
+
 module.exports = router;

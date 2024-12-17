@@ -9,7 +9,12 @@ const storySchema = mongoose.Schema({
     coverImage: String, // url de l'image
     storyFile: String, // url du fichier
     isLiked: Boolean, // par défaut = false
-});
+    
+}, { timestamps: { 
+    createdAt: 'createdAt', // Nom personnalisé pour createdAt
+    updatedAt: 'updatedAt'  // Nom personnalisé pour updatedAt
+}
+} );
 
 const Story = mongoose.model('stories', storySchema);
 
