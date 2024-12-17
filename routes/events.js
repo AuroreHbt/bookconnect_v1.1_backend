@@ -31,7 +31,7 @@ router.post("/addevent", async (req, res) => {
     
         console.log("Données de l'événement :", eventData);
         
-        const { planner, title, category, date, place, description, url, isLiked } = eventData;
+        const { planner, title, category, subcategory, date, identityPlace, place, description, url, isLiked } = eventData;
     
         // Vérification que l'organisateur (planner) est fourni
         if (!planner) {
@@ -48,14 +48,20 @@ router.post("/addevent", async (req, res) => {
     
         // Validation des champs obligatoires
         if (
-            !title ||
-            !category ||
-            !description ||
-            !date ||
-            !place ||
-            !place.number ||
-            !place.street ||
-            !place.city
+          !planner ||
+          !title ||
+          !category ||
+          !subcategory ||
+          !date ||
+          !date.day ||
+          !date.start ||
+          !date.end ||
+          !identityPlace ||
+          !place ||
+          !place.number ||
+          !place.street ||
+          !place.city ||
+          !description
         ) {
             return res.json({
                 result: false,
@@ -121,7 +127,9 @@ router.post("/addevent", async (req, res) => {
             planner: user._id, // Utiliser l'ID de l'utilisateur (organisateur)
             title,
             category,
+            subcategory,
             date: { day, start, end },
+            identityPlace,
             place: { number, street, city, code },
             description,
             eventImage,
@@ -223,6 +231,29 @@ router.get("/searchevent/:place", async (req, res) => {
     res.status(500).json({ result: false, error: "Erreur serveur" });
   }
 });
+
+router.get('/searcheventByUser/:planner', (req, res) => {
+    console.log('Requête reçue pour planner :', req.params.planner);
+
+    // Recherche de l'utilisateur dans la base de données
+    User.findOne({ username: req.params.planner })
+        .then(user => {
+            // Si aucun utilisateur trouvé, renvoie une erreur
+            if (!user) {
+                return res.json({ result: false, error: 'Planner non trouvé' });
+            }
+            // Si l'utilisateur est trouvé, rechercher toutes les histoires associées à son ID
+            Event.find({ planner: user._id })
+                .populate('planner', ['username', 'email']) // Remplit les détails de l'auteur (nom d'utilisateur et email) pour chaque histoire
+                .populate('category')
+                .sort({ createdAt: 'desc' }) // Trie les histoires par ordre décroissant de date de création
+                .then(events => {
+                    console.log('evenements trouvés :', events); // stories = [{...}]
+                    res.json({ result: true, events }); // Renvoyer les histoires trouvées
+                });
+        });
+});
+
 
 router.delete("/deleteevent", (req, res) => {
   console.log("relou");
