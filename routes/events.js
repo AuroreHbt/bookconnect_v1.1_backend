@@ -34,7 +34,7 @@ router.post("/addevent", async (req, res) => {
     
         console.log("Données de l'événement :", eventData);
         
-        const { planner, title, category, subcategory, date, identityPlace, place, description, url, isLiked } = eventData;
+        const { planner, title, category, date, identityPlace, place, description, url, isLiked } = eventData;
     
         // Vérification que l'organisateur (planner) est fourni
         if (!planner) {
@@ -54,7 +54,6 @@ router.post("/addevent", async (req, res) => {
           !planner ||
           !title ||
           !category ||
-          !subcategory ||
           !date ||
           !date.day ||
           !date.start ||
@@ -132,7 +131,6 @@ router.post("/addevent", async (req, res) => {
             planner: user._id, // Utiliser l'ID de l'utilisateur (organisateur)
             title,
             category,
-            subcategory,
             date: { day, start, end },
             identityPlace,
             place: { number, street, city, code },
