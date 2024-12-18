@@ -17,6 +17,9 @@ const mime = require("mime-types");
 const Event = require("../models/events");
 const User = require("../models/users");
 
+// import du module checkBody
+const { checkBody } = require("../modules/checkBody");
+
 const API_KEY_MAP = process.env.EXPO_PUBLIC_MAP_API_KEY;
 
 router.post("/addevent", async (req, res) => {
@@ -101,6 +104,8 @@ router.post("/addevent", async (req, res) => {
             const file = req.files.eventImage;
             const fileExtension = mime.extension(file.mimetype);
             const validExtensions = ["jpg", "jpeg", "png", "gif"];
+            console.log("Fichiers reçus :", req.files);
+
     
             if (!validExtensions.includes(fileExtension)) {
                 return res.json({
@@ -146,7 +151,7 @@ router.post("/addevent", async (req, res) => {
     
         // Récupération de l'événement peuplé avec les informations de l'organisateur (planner)
         const populatedEvent = await Event.findById(savedEvent._id).populate("planner");
-    
+        console.log("Événement peuplé :", populatedEvent); // Vérifie si eventImage contient l'URL
         res.json({
             result: true,
             message: "Événement créé avec succès.",
@@ -257,7 +262,8 @@ router.get('/searcheventByUser/:planner', (req, res) => {
 
 router.delete("/deleteevent", (req, res) => {
   console.log("relou");
-  if (!checkBody(req.body, ["token", "eventId"])) {
+  console.log("Requête body :", req.body);
+  if (!checkBody(req.body, ["token", "id"])) {
     res.json({ result: false, error: "Champs manquants ou vides" });
     return;
   }
@@ -267,8 +273,8 @@ router.delete("/deleteevent", (req, res) => {
       res.json({ result: false, error: "Utilisateur non trouvé" });
       return;
     }
-
-    Event.findById(req.body.eventId)
+    console.log("Recherche de l'événement avec ID :", req.body.id);
+    Event.findById(req.body.id)
       .populate("planner")
       .then((event) => {
         if (!event) {
@@ -286,9 +292,17 @@ router.delete("/deleteevent", (req, res) => {
         event.deleteOne({ _id: event._id }).then(() => {
           res.json({ result: true });
           console.log("event deleted");
+        }).catch((error) => {
+          res.json({ result: false, error: "Erreur lors de la suppression de l'événement" });
+          console.error(error);
         });
+      })
+      .catch((error) => {
+        res.json({ result: false, error: "Erreur interne du serveur" });
+        console.error(error);
       });
   });
 });
+
 
 module.exports = router;
