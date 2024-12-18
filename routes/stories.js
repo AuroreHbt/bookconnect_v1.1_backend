@@ -248,27 +248,16 @@ router.delete("/deletepublishedstory", async (req, res) => {
 
 
 // Route pour modifier une histoire spécifique d'un auteur
-router.put('/updatepublishedstory', async (req, res) => {
-    const { title, category, isAdult, description, coverImage, storyFile } = req.body;
+router.put('/updatepublishedstory/:id', async (req, res) => {
+    const storyId = req.params.id;
+    const { ...updatedData } = req.body;
+    // ...updatedData = destructuration de l'objet updateData, ce qui permet d'accéder à toutes les propriétés de l'objet updateData
+
     // Debug
     console.log('connexion route ok')
-    console.log("Requête :", req.body);
-    console.log("Requête reçue - req.body.title :", req.body.title);
-    console.log("Requête reçue - req.body.category :", req.body.category);
-    console.log("Requête reçue - req.body.isAdult :", req.body.isAdult);
-    console.log("Requête reçue - req.body.description :", req.body.description);
-    console.log("Requête reçue - req.body.coverImage :", req.body.coverImage);
-    console.log("Requête reçue - req.body.storyFile :", req.body.storyFile);
-
-    // stories = [] => cf. initial value du reducer stories
-    stories[title] = req.body.newTitle; // Update titre
-    res.json({ stories: title });
-
-    stories[category] = req.body.newCategory; // Update category
-    res.json({ stories: category });
-
-    stories[description] = req.body.newDescription; // Update titre
-    res.json({ stories: description });
+    console.log("Requête req.params.id :", req.params.id);
+    console.log("Requête req.body :", req.body);
+    console.log("Requête ...updatedData :", ...updatedData);
 
     try {
 
