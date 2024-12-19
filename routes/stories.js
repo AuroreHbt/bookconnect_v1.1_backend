@@ -18,7 +18,8 @@ const User = require("../models/users");
 // import du module checkBody
 const { checkBody } = require("../modules/checkBody");
 
-// Routes pour poster une nouvelle histoire
+
+// Routes POST/addstory pour poster une nouvelle histoire
 router.post("/addstory", async (req, res) => {
     try {
         console.log("Requête reçue - req.body :", req.body); // Champs textuels
@@ -179,7 +180,8 @@ router.post("/addstory", async (req, res) => {
     }
 });
 
-// Route pour chercher les nouvelles histoires postées par un auteur
+
+// Route GET/mypublishedstory/:author pour chercher les nouvelles histoires postées par un auteur
 router.get("/mypublishedstory/:author", (req, res) => {
     console.log("Requête reçue pour auteur :", req.params.author);
 
@@ -201,7 +203,8 @@ router.get("/mypublishedstory/:author", (req, res) => {
     });
 });
 
-// Route pour supprimer une histoire spécifique d'un auteur
+
+// Route DELETE/deletepublishedstory pour supprimer une histoire spécifique d'un auteur
 router.delete("/deletepublishedstory", async (req, res) => {
     // Debug => ok
     // console.log('connexion route ok')
@@ -249,59 +252,59 @@ router.delete("/deletepublishedstory", async (req, res) => {
 
 // Route pour modifier une histoire spécifique d'un auteur
 router.put('/updatepublishedstory/:id', async (req, res) => {
-    const storyId = req.params.id;
-    const { ...updatedData } = req.body;
-    // ...updatedData = destructuration de l'objet updateData, ce qui permet d'accéder à toutes les propriétés de l'objet updateData
+    const storyId = req.params.id; // parametre de recherche (dans l'url), cible la story à modifier
+    const { token, title, description } = req.body; // récupération des infos nécessaire par destructuration du corps de la requête
 
-    // Debug
-    console.log('connexion route ok')
-    console.log("Requête req.params.id :", req.params.id);
+    // Pour debug : 
+    console.log('connexion route ok');
+    console.log("Requête req.params.id :", storyId);
     console.log("Requête req.body :", req.body);
-    console.log("Requête ...updatedData :", ...updatedData);
 
     try {
-
-        if (!checkBody(req.body, ["token", "id"])) {
-            res.json({ result: false, error: "User ou story non trouvés" });
-            return; // early return : stop le code si la condition n'est pas remmplie
+        if (!token || !storyId) { // si pas de user trouvé ou de story trouvée
+            return res.status(400).json({ result: false, error: "User (author) ou Story non trouvé" });
+            // code erreur 400 = bad request
         }
 
-        // recherche du user qui correspond à l'author
-        User.findOne({ token: req.body.token }).then((user) => {
-            if (user === null) {
-                res.json({ result: false, error: "User not found" });
-                return;
-            }
+        const user = await User.findOne({ token }); // rechercher le user via son token
+        if (!user) {
+            return res.json({ result: false, error: "Utilisateur non trouvé" });
+        }
 
-            // recherche de l'histoire qui correspond à l'author
-            Story.findById(req.body.id)
-                .populate("author")
-                .then((story) => {
-                    if (!story) {
-                        res.json({ result: false, error: "story not found" });
-                        return;
-                    } else if (String(story.author._id) !== String(user._id)) {
-                        // ObjectId doit être converti en format string (JS ne peut pa comparer 2 objets) : vérifie si l'histoire existe et si l'utilisateur est l'author de la story
-                        res.json({
-                            result: false,
-                            error: "Story can only be deleted by its author",
-                        });
-                        return;
-                    }
+        const story = await Story.findById(storyId).populate("author"); // rechercher la story à modifier via son Id + liaison avec son author
+        if (!story) {
+            return res.json({ result: false, error: "Histoire non trouvée" });
+        }
 
-                    story.updateOne({ _id: story._id }).then(() => {
-                        res.json({ result: true, message: "story updated" });
-                    });
-                });
-        });
+        if (String(story.author._id) !== String(user._id)) { // Vérifie si l'utilisateur (user._id) est l'auteur de l'histoire (story.author._id).
+
+            return res.json({ result: false, error: "L'histoire n'est pas de cet author. Modification refusée." });
+        }
+
+        const updatedStory = await Story.findById(storyId); // si la story est trouvée => update
+        if (updatedStory) {
+            updatedStory.title = title;
+            updatedStory.description = description;
+            await updatedStory.save();
+        }
+
+        // https://www.mongodb.com/docs/v4.4/reference/operator/update/set/
+        // const updatedStory = await Story.findByIdAndUpdate(
+        //     storyId,
+        //     { $set: { title, description } },
+        //     { new: true }
+        // );
+
+        res.json({ result: true, message: "Histoire mise à jour", story: updatedStory });
+
     } catch (error) {
         console.error("Erreur lors de la modification de l'histoire :", error);
+        res.json({ result: false, error: "Erreur serveur lors de la modification de l'histoire" });
     }
 });
 
 
-// Route get pour rechercher une histoire soit par titre, auteur, catégorie ou bien avec ces trois champs
-
+// Route GET/search pour rechercher une histoire soit par titre, auteur, catégorie ou bien avec ces trois champs
 router.get("/search", (req, res) => {
     const { author, title, category } = req.query;
 
@@ -358,8 +361,8 @@ router.get("/search", (req, res) => {
     }
 });
 
-// Route get pour chercher toutes les histoires, peu importe l'auteur
 
+// Route GET/allstories pour chercher toutes les histoires, peu importe l'auteur
 router.get("/allstories", (req, res) => {
     Story.find()
         .populate("author", ["username", "email"])
@@ -374,6 +377,8 @@ router.get("/allstories", (req, res) => {
         })
 })
 
+
+// route GET/laststories : récupère les dernieres stories postées
 router.get("/laststories", (req, res) => {
     Story.find()
         .populate("author", ["username", "email"])
