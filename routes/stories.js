@@ -251,49 +251,58 @@ router.delete("/deletepublishedstory", async (req, res) => {
 
 
 // Route pour modifier une histoire spécifique d'un auteur
-router.put('/updatepublishedstory/:id', async (req, res) => {
-    const storyId = req.params.id; // parametre de recherche (dans l'url), cible la story à modifier
-    const { token, title, description } = req.body; // récupération des infos nécessaire par destructuration du corps de la requête
+router.put('/updatepublishedstory', async (req, res) => {
+
+    const { token, storyId, title, description } = req.body; // Déstructuration des valeurs
 
     // Pour debug : 
     console.log('connexion route ok');
-    console.log("Requête req.params.id :", storyId);
-    console.log("Requête req.body :", req.body);
+    console.log("Requête body:", req.body);
+    console.log("Requête token:", token);
+    console.log("Requête storyId:", storyId);
+    console.log("Requête title:", title);
+    console.log("Requête description:", description);
 
     try {
-        if (!token || !storyId) { // si pas de user trouvé ou de story trouvée
-            return res.status(400).json({ result: false, error: "User (author) ou Story non trouvé" });
-            // code erreur 400 = bad request
-        }
+        // Vérification des champs requis
+        if (!checkBody(req.body, ['token', 'storyId', 'title', 'description'])) {
+            res.json({ result: false, error: 'Missing or empty fields' });
+            return;
+        };
 
-        const user = await User.findOne({ token }); // rechercher le user via son token
+        // rechercher le user via son token
+        const user = await User.findOne({ token });
         if (!user) {
-            return res.json({ result: false, error: "Utilisateur non trouvé" });
+            return res.json({ result: false, error: 'User not found' });
         }
 
-        const story = await Story.findById(storyId).populate("author"); // rechercher la story à modifier via son Id + liaison avec son author
+        console.log(user);
+        
+
+        // rechercher la story à modifier via son Id et son auteur
+        const story = await Story.findById(storyId).populate("author");
         if (!story) {
-            return res.json({ result: false, error: "Histoire non trouvée" });
+            res.json({ result: false, error: 'Story not found' });
+            return;
+        };
+
+        // si pas de user trouvé ou de story trouvée
+        if (!token || !storyId) {
+            return res.json({ result: false, error: "User (author) ou Story non trouvé" });
         }
 
-        if (String(story.author._id) !== String(user._id)) { // Vérifie si l'utilisateur (user._id) est l'auteur de l'histoire (story.author._id).
+        // Vérifie si l'utilisateur (user._id) est bien l'auteur de l'histoire (story.author._id).
+        if (String(story.author._id) !== String(user._id)) {
+            console.log('story.author._id: ', String(story.author._id));
+            console.log('user._id: ', String(user._id));
 
             return res.json({ result: false, error: "L'histoire n'est pas de cet author. Modification refusée." });
         }
 
-        const updatedStory = await Story.findById(storyId); // si la story est trouvée => update
-        if (updatedStory) {
-            updatedStory.title = title;
-            updatedStory.description = description;
-            await updatedStory.save();
-        }
-
-        // https://www.mongodb.com/docs/v4.4/reference/operator/update/set/
-        // const updatedStory = await Story.findByIdAndUpdate(
-        //     storyId,
-        //     { $set: { title, description } },
-        //     { new: true }
-        // );
+        // si toutes les cond sont ok => modif
+        story.title = title;
+        story.description = description;
+        const updatedStory = await story.save(); // Sauvegarde les modifications
 
         res.json({ result: true, message: "Histoire mise à jour", story: updatedStory });
 
