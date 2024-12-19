@@ -13,7 +13,7 @@ const uid2 = require('uid2');
 
 
 // route POST pour s'inscrire (new user)
-router.post('/signup', (req, res) => {
+router.post('/signup', async (req, res) => {
   console.log(req.body);
 
   if (!checkBody(req.body, ['username', 'email', 'password'])) {
@@ -22,44 +22,63 @@ router.post('/signup', (req, res) => {
   }
 
   // Check if the user has not already been registered
-  User.findOne({ username: { $regex: new RegExp(req.body.username, 'i') } }).then(data => {
-    if (data === null) {
-      const hash = bcrypt.hashSync(req.body.password, 10);
+  await User.findOne({ username: { $regex: new RegExp(req.body.username, 'i') } })
+    .then(data => {
+      if (data === null) {
+        const hash = bcrypt.hashSync(req.body.password, 10);
 
-      const newUser = new User({
-        username: req.body.username,
-        email: req.body.email,
-        password: hash,
-        token: uid2(32),
-      });
+        const newUser = new User({
+          username: req.body.username,
+          email: req.body.email,
+          password: hash,
+          token: uid2(32),
+        });
 
-      newUser.save().then(newDoc => {
-        console.log(newDoc);
-        res.json({ result: true, username: newDoc.username, token: newDoc.token });
-      });
-    } else {
-      // User already exists in database
-      res.json({ result: false, error: 'User already exists' });
-    }
-  });
+        newUser.save().then(newDoc => {
+          console.log(newDoc);
+          res.json({ result: true, username: newDoc.username, token: newDoc.token });
+        });
+      } else {
+        // User already exists in database
+        res.json({ result: false, error: 'User already exists' });
+      }
+    });
 });
 
 // route POST pour se connecter (user déjà inscrit)
-router.post('/signin', (req, res) => {
-  console.log(req.body);
+router.post('/signin', async (req, res) => {
+  console.log('req.body: ', req.body);
 
   if (!checkBody(req.body, ['email', 'password'])) {
     res.json({ result: false, error: 'Missing or empty fields' });
     return;  //l'utilisateur n'a pas (ou mal) rempli tous les champs (early return)
   }
 
-  User.findOne({ email: { $regex: new RegExp(req.body.email, 'i') } }).then(data => {
-    if (data && bcrypt.compareSync(req.body.password, data.password)) {
-      res.json({ result: true, username: data.username, email: data.email, token: data.token, _id: data._id }); // L'utilisateur est trouvé, la connexion s'effectue
+  // Vérifier que l'email existe dans la BDD
+  const user = await User.findOne({ email: req.body.email.toLowerCase() });
+  console.log('Recherche user par son email :', req.body.email.toLowerCase());
+  console.log('user: ', user);
+
+  // si le user est trouvé par son mail dans la BDD et que le mdp correspond => connexion ok
+  if (user !== null) {
+    // Comparer le mot de passe uniquement si l'utilisateur existe
+    if (bcrypt.compareSync(req.body.password, user.password)) {
+      res.json({
+        result: true,
+        username: user.username,
+        email: user.email,
+        token: user.token,
+        _id: user._id
+      });
+      // si le mdp est ok, user trouvé => la connexion s'effectue
     } else {
-      res.json({ result: false, error: 'User not found or wrong password' }); // L'utilisateur n'est pas trouvé, soit il n'a pas de compte soit il a un compte mais il s'est trompé de mdp 
+      res.json({ result: false, error: 'Utilisateur non trouvé ou erreur de mot de passe' });
+      // Mot de passe incorrect => connexion annulée
     }
-  });
+  } else {
+    res.json({ result: false, error: 'Utilisateur non trouvé ou erreur de mot de passe' });
+    // Utilisateur non trouvé => pas de comparaison de mdp et connexion annulée
+  }
 });
 
 module.exports = router;
