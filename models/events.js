@@ -4,7 +4,6 @@ const eventSchema = mongoose.Schema({
     planner: { type: mongoose.Schema.Types.ObjectId, ref: 'users' },   // foreign keys pour relier les stories créées par le même utilisateur.
     title: String,
     category: String,
-    subcategory: String,
     date: {
         day: Date,
         start: Date,
