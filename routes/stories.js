@@ -250,9 +250,8 @@ router.delete("/deletepublishedstory", async (req, res) => {
 });
 
 
-// Route pour modifier une histoire spécifique d'un auteur
+// Route pour modifier une histoire spécifique d'un auteur => test sur postman OK
 router.put('/updatepublishedstory', async (req, res) => {
-
     const { token, storyId, title, description } = req.body; // Déstructuration des valeurs
 
     // Pour debug : 
@@ -269,15 +268,12 @@ router.put('/updatepublishedstory', async (req, res) => {
             res.json({ result: false, error: 'Missing or empty fields' });
             return;
         };
-
         // rechercher le user via son token
         const user = await User.findOne({ token });
         if (!user) {
             return res.json({ result: false, error: 'User not found' });
         }
-
         console.log(user);
-        
 
         // rechercher la story à modifier via son Id et son auteur
         const story = await Story.findById(storyId).populate("author");
@@ -285,7 +281,6 @@ router.put('/updatepublishedstory', async (req, res) => {
             res.json({ result: false, error: 'Story not found' });
             return;
         };
-
         // si pas de user trouvé ou de story trouvée
         if (!token || !storyId) {
             return res.json({ result: false, error: "User (author) ou Story non trouvé" });
@@ -298,19 +293,77 @@ router.put('/updatepublishedstory', async (req, res) => {
 
             return res.json({ result: false, error: "L'histoire n'est pas de cet author. Modification refusée." });
         }
-
         // si toutes les cond sont ok => modif
         story.title = title;
         story.description = description;
         const updatedStory = await story.save(); // Sauvegarde les modifications
 
         res.json({ result: true, message: "Histoire mise à jour", story: updatedStory });
-
     } catch (error) {
         console.error("Erreur lors de la modification de l'histoire :", error);
         res.json({ result: false, error: "Erreur serveur lors de la modification de l'histoire" });
     }
 });
+
+
+// // Route PATCH pour modifier PARTIELLEMENT une histoire spécifique d'un auteur => requete PATCH
+// router.patch('/updatepublishedstory', async (req, res) => {
+//     const { token, storyId, newTitle, newDescription } = req.body;
+//     // Déstructuration des valeurs
+
+//     // Pour debug : 
+//     console.log('connexion route ok');
+//     console.log("Requête storyId:", storyId);
+//     console.log("Requête newTitle:", newTitle);
+//     console.log("Requête newDescription:", newDescription);
+
+//     try {
+//         // Vérification des champs requis
+//         if (!checkBody(req.body, ['token', 'storyId'])) {
+//             return res.json({ result: false, error: 'Missing or empty fields' });
+//         }
+
+//         // Rechercher le user via son token
+//         const user = await User.findOne({ token });
+//         if (!user) {
+//             return res.json({ result: false, error: 'User not found' });
+//         }
+//         // console.log('User: ',user);
+
+//         // Rechercher la story à modifier via son Id
+//         const story = await Story.findById(storyId);
+//         // const story = await Story.findById(storyId).populate("author");
+//         if (!story) {
+//             return res.json({ result: false, error: 'Story not found' });
+//         }
+
+//         // Vérifier si l'utilisateur est l'auteur de l'histoire
+//         if (String(story.author) !== String(user._id)) {
+//             return res.json({ result: false, error: "L'histoire n'est pas de cet auteur. Modification refusée." });
+//         }
+
+//         // Mise à jour conditionnelle des champs
+//         if (newTitle !== undefined) story.title = newTitle;
+//         if (newDescription !== undefined) story.description = newDescription;
+
+//         // Vérifier si des modifications ont été apportées
+//         if (newTitle === undefined && newDescription === undefined) {
+//             return res.json({ result: false, error: "Aucune modification n'a été fournie" });
+//         }
+
+//         // Appliquer les modifications
+//         Object.assign(story, updateData);
+
+//         // Sauvegarder les modifications
+//         const updatedStory = await story.save();
+
+//         res.json({ result: true, message: "Histoire mise à jour", story: updatedStory });
+
+//     } catch (error) {
+//         console.error("Erreur lors de la modification de l'histoire :", error);
+//         res.json({ result: false, error: "Erreur serveur lors de la modification de l'histoire" });
+//     }
+// });
 
 
 // Route GET/search pour rechercher une histoire soit par titre, auteur, catégorie ou bien avec ces trois champs
